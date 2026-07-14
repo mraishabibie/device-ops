@@ -1,0 +1,36 @@
+# Node.js
+apps/dashboard/node_modules/
+apps/dashboard/.next/
+apps/dashboard/out/
+apps/dashboard/build/
+apps/dashboard/.env*.local
+
+# Python / FastAPI
+apps/api/__pycache__/
+apps/api/.pytest_cache/
+apps/api/.venv/
+apps/api/venv/
+apps/api/env/
+apps/api/.uv/
+apps/api/*.pyc
+
+# Android / Gradle
+apps/agent/.gradle/
+apps/agent/build/
+apps/agent/app/build/
+apps/agent/local.properties
+apps/agent/.idea/
+apps/agent/*.iml
+apps/agent/.cxx/
+apps/agent/.externalNativeBuild/
+
+# OS/System
+.DS_Store
+Thumbs.db
+
+# Environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
