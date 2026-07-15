@@ -39,9 +39,10 @@ async def login(
             detail="User account is inactive or disabled"
         )
         
-    # Generate token payload
-    access_token = auth_service.create_access_token(subject=user.id)
-    refresh_token = auth_service.create_refresh_token(subject=user.id)
+    # Generate token payload with identity claims for frontend fallback
+    token_claims = {"role": user.role, "company_id": str(user.company_id)}
+    access_token = auth_service.create_access_token(subject=user.id, extra_claims=token_claims)
+    refresh_token = auth_service.create_refresh_token(subject=user.id, extra_claims=token_claims)
     
     # Audit log update for login timestamp
     user.last_login_at = datetime.now(timezone.utc)
@@ -82,8 +83,9 @@ async def refresh_token(
             detail="User account is inactive or disabled"
         )
         
-    # Generate new access token
-    new_access_token = auth_service.create_access_token(subject=user.id)
+    # Generate new access token with current identity claims
+    token_claims = {"role": user.role, "company_id": str(user.company_id)}
+    new_access_token = auth_service.create_access_token(subject=user.id, extra_claims=token_claims)
     # Return new access token along with the same refresh token
     return TokenResponse(
         access_token=new_access_token,

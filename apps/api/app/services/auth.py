@@ -28,32 +28,36 @@ class AuthService:
             logger.error(f"Unexpected password verification failure: {e}")
             return False
 
-    def create_token(self, subject: str | Any, expires_delta: timedelta, token_type: str) -> str:
-        """Generate a signed JWT token containing a subject and expiry threshold"""
+    def create_token(self, subject: str | Any, expires_delta: timedelta, token_type: str, extra_claims: dict | None = None) -> str:
+        """Generate a signed JWT token containing a subject, expiry threshold and optional extra claims"""
         expire = datetime.now(timezone.utc) + expires_delta
         payload = {
             "sub": str(subject),
             "exp": int(expire.timestamp()),
             "type": token_type
         }
+        if extra_claims:
+            payload.update(extra_claims)
         encoded_jwt = jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
         return encoded_jwt
 
-    def create_access_token(self, subject: str | Any) -> str:
+    def create_access_token(self, subject: str | Any, extra_claims: dict | None = None) -> str:
         """Create a short-lived access token"""
         return self.create_token(
             subject=subject,
             expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
-            token_type="access"
+            token_type="access",
+            extra_claims=extra_claims
         )
 
-    def create_refresh_token(self, subject: str | Any) -> str:
+    def create_refresh_token(self, subject: str | Any, extra_claims: dict | None = None) -> str:
         """Create a longer-lived refresh token"""
         # Refresh tokens default to 7 days lifespan
         return self.create_token(
             subject=subject,
             expires_delta=timedelta(days=7),
-            token_type="refresh"
+            token_type="refresh",
+            extra_claims=extra_claims
         )
 
     def decode_token(self, token: str) -> dict[str, Any] | None:
