@@ -20,8 +20,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.deviceops.agent.data.local.AppDatabase
 import com.deviceops.agent.R
 import com.deviceops.agent.data.remote.DeviceOpsApi
 import com.deviceops.agent.data.remote.PairRequest
@@ -47,6 +50,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvOr: TextView
     private lateinit var btnScanQr: Button
 
+    // Debug screen bindings
+    private lateinit var layoutDebug: View
+    private lateinit var tvDebugPairStatus: TextView
+    private lateinit var tvDebugDeviceId: TextView
+    private lateinit var tvDebugApiUrl: TextView
+    private lateinit var tvDebugLastSync: TextView
+    private lateinit var tvDebugQueueCount: TextView
+    private lateinit var tvDebugLastResult: TextView
+    private lateinit var btnSyncNow: Button
+
     private val fineLocationPermissionCode = 101
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +73,22 @@ class MainActivity : AppCompatActivity() {
         btnRequestIgnoreBattery = findViewById(R.id.btnRequestIgnoreBattery)
         tvOr = findViewById(R.id.tvOr)
         btnScanQr = findViewById(R.id.btnScanQr)
+
+        // Bind debug fields
+        layoutDebug = findViewById(R.id.layoutDebug)
+        tvDebugPairStatus = findViewById(R.id.tvDebugPairStatus)
+        tvDebugDeviceId = findViewById(R.id.tvDebugDeviceId)
+        tvDebugApiUrl = findViewById(R.id.tvDebugApiUrl)
+        tvDebugLastSync = findViewById(R.id.tvDebugLastSync)
+        tvDebugQueueCount = findViewById(R.id.tvDebugQueueCount)
+        tvDebugLastResult = findViewById(R.id.tvDebugLastResult)
+        btnSyncNow = findViewById(R.id.btnSyncNow)
+
+        if (com.deviceops.agent.BuildConfig.DEBUG) {
+            btnSyncNow.setOnClickListener {
+                triggerManualSync()
+            }
+        }
 
         checkPermissions()
         checkBatteryOptimizations()
@@ -180,8 +209,11 @@ class MainActivity : AppCompatActivity() {
     private fun updateUIState() {
         val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
         val token = sharedPrefs.getString("device_auth_token", null)
+        val serverUrl = sharedPrefs.getString("server_api_url", "http://10.0.2.2:8000/") ?: "http://10.0.2.2:8000/"
+        
         if (token != null) {
-            tvStatus.text = "Device Status: PAIRED & CONNECTED\nTelemetry Sync: Scheduled (30 mins)"
+            val syncIntervalMsg = if (com.deviceops.agent.BuildConfig.DEBUG) "1 min" else "30 mins"
+            tvStatus.text = "Device Status: PAIRED & CONNECTED\nTelemetry Sync: Scheduled ($syncIntervalMsg)"
             etPairingToken.visibility = View.GONE
             btnPair.visibility = View.GONE
             btnScanQr.visibility = View.GONE
@@ -192,6 +224,70 @@ class MainActivity : AppCompatActivity() {
             btnPair.visibility = View.VISIBLE
             btnScanQr.visibility = View.VISIBLE
             tvOr.visibility = View.VISIBLE
+        }
+
+        // Configure and populate debug console
+        if (com.deviceops.agent.BuildConfig.DEBUG) {
+            layoutDebug.visibility = View.VISIBLE
+            
+            val isPaired = token != null
+            tvDebugPairStatus.text = "Pair Status: ${if (isPaired) "Paired" else "Unpaired"}"
+            
+            val deviceId = getDeviceIdFromToken(token)
+            tvDebugDeviceId.text = "Device ID: $deviceId"
+            tvDebugApiUrl.text = "API URL: $serverUrl"
+            
+            val lastSync = sharedPrefs.getString("last_sync_time", "Never")
+            tvDebugLastSync.text = "Last Sync Time: $lastSync"
+            
+            val lastResult = sharedPrefs.getString("last_upload_result", "None")
+            tvDebugLastResult.text = "Last Upload Result: $lastResult"
+            
+            // Query Room DB for pending queue count asynchronously
+            lifecycleScope.launch(Dispatchers.Main) {
+                val count = withContext(Dispatchers.IO) {
+                    try {
+                        val db = AppDatabase.getDatabase(applicationContext)
+                        val dao = db.logDao()
+                        dao.getAllGPS().size + dao.getAllBattery().size + dao.getAllNetwork().size
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+                tvDebugQueueCount.text = "Pending Queue Count: $count"
+            }
+        } else {
+            layoutDebug.visibility = View.GONE
+        }
+    }
+
+    private fun getDeviceIdFromToken(token: String?): String {
+        if (token == null) return "Unknown"
+        val parts = token.split(".")
+        if (parts.size < 2) return "Unknown"
+        return try {
+            val payloadBytes = android.util.Base64.decode(parts[1], android.util.Base64.DEFAULT)
+            val payloadString = String(payloadBytes, Charsets.UTF_8)
+            val json = JSONObject(payloadString)
+            json.optString("sub", "Unknown")
+        } catch (e: Exception) {
+            "Unknown"
+        }
+    }
+
+    private fun triggerManualSync() {
+        val workRequest = OneTimeWorkRequestBuilder<TelemetryWorker>().build()
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            "TelemetrySyncManual",
+            ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
+        Toast.makeText(this, "Manual sync triggered", Toast.LENGTH_SHORT).show()
+        
+        // Refresh debug screen stats after a short delay
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(2000)
+            updateUIState()
         }
     }
 
@@ -238,18 +334,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scheduleTelemetryWorker() {
-        val workRequest = PeriodicWorkRequestBuilder<TelemetryWorker>(30, TimeUnit.MINUTES)
-            .build()
-
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            "TelemetrySyncJob",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+        if (com.deviceops.agent.BuildConfig.DEBUG) {
+            // For debug mode: start the 1-minute self-scheduling loop immediately using OneTimeWorkRequest
+            val workRequest = OneTimeWorkRequestBuilder<TelemetryWorker>()
+                .build() // runs immediately
+            WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                "TelemetrySyncJobDebug",
+                ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
+        } else {
+            // For production: schedule periodic 30-minute worker
+            val workRequest = PeriodicWorkRequestBuilder<TelemetryWorker>(30, TimeUnit.MINUTES)
+                .build()
+            WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+                "TelemetrySyncJob",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        }
     }
 
     override fun onResume() {
         super.onResume()
         checkBatteryOptimizations()
+        updateUIState()
     }
 }

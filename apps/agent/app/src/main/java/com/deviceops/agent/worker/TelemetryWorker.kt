@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.deviceops.agent.BuildConfig
 import com.deviceops.agent.data.local.*
 import com.deviceops.agent.data.remote.*
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +60,34 @@ class TelemetryWorker(
                 syncCachedLogs(deviceToken, dao)
             }
 
+            // Schedule next run in 1 min if in debug mode
+            if (BuildConfig.DEBUG) {
+                val workRequest = androidx.work.OneTimeWorkRequestBuilder<TelemetryWorker>()
+                    .setInitialDelay(1, java.util.concurrent.TimeUnit.MINUTES)
+                    .build()
+                androidx.work.WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                    "TelemetrySyncJobDebug",
+                    androidx.work.ExistingWorkPolicy.REPLACE,
+                    workRequest
+                )
+            }
+
             Result.success()
         } catch (e: Exception) {
             Log.e("TelemetryWorker", "Telemetry collection job failed: ${e.message}", e)
+            
+            // Also reschedule on failure in debug mode to keep the loop going!
+            if (BuildConfig.DEBUG) {
+                val workRequest = androidx.work.OneTimeWorkRequestBuilder<TelemetryWorker>()
+                    .setInitialDelay(1, java.util.concurrent.TimeUnit.MINUTES)
+                    .build()
+                androidx.work.WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                    "TelemetrySyncJobDebug",
+                    androidx.work.ExistingWorkPolicy.REPLACE,
+                    workRequest
+                )
+            }
+            
             Result.retry()
         }
     }
@@ -204,14 +230,25 @@ class TelemetryWorker(
         Log.d("TelemetryWorker", "Syncing logs to backend server: ${syncPayload.gps_logs.size} GPS, ${syncPayload.battery_logs.size} Battery, ${syncPayload.network_logs.size} Network...")
 
         val response = apiService.uploadTelemetry("Bearer $token", syncPayload)
+        val nowFormatted = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         if (response.isSuccessful && response.body()?.success == true) {
             Log.i("TelemetryWorker", "Telemetry upload successful. Deleting synchronised logs locally...")
             // Store & Forward: wipe synchronised entries
             dao.deleteGPS(gpsList)
             dao.deleteBattery(batteryList)
             dao.deleteNetwork(networkList)
+            
+            sharedPrefs.edit()
+                .putString("last_sync_time", nowFormatted)
+                .putString("last_upload_result", "Success (${gpsList.size} GPS, ${batteryList.size} Battery, ${networkList.size} Network)")
+                .apply()
         } else {
-            Log.w("TelemetryWorker", "Telemetry upload failed: ${response.code()} ${response.errorBody()?.string()}")
+            val errStr = response.errorBody()?.string() ?: "Response code ${response.code()}"
+            Log.w("TelemetryWorker", "Telemetry upload failed: $errStr")
+            
+            sharedPrefs.edit()
+                .putString("last_upload_result", "Failed: $errStr")
+                .apply()
         }
     }
 }

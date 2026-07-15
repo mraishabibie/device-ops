@@ -9,19 +9,30 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import com.deviceops.agent.BuildConfig
+
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.i("BootReceiver", "Reboot detected. Rescheduling telemetry periodic workers...")
+            Log.i("BootReceiver", "Reboot detected. Rescheduling telemetry workers...")
             
-            val workRequest = PeriodicWorkRequestBuilder<TelemetryWorker>(30, TimeUnit.MINUTES)
-                .build()
-
-            WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(
-                "TelemetrySyncJob",
-                ExistingPeriodicWorkPolicy.KEEP,
-                workRequest
-            )
+            if (BuildConfig.DEBUG) {
+                val workRequest = OneTimeWorkRequestBuilder<TelemetryWorker>().build()
+                WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                    "TelemetrySyncJobDebug",
+                    ExistingWorkPolicy.REPLACE,
+                    workRequest
+                )
+            } else {
+                val workRequest = PeriodicWorkRequestBuilder<TelemetryWorker>(30, TimeUnit.MINUTES).build()
+                WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(
+                    "TelemetrySyncJob",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    workRequest
+                )
+            }
         }
     }
 }

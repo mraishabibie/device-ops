@@ -99,4 +99,94 @@
         android:textStyle="bold"
         android:visibility="gone" />
 
+    <!-- Debug Console Layout -->
+    <LinearLayout
+        android:id="@+id/layoutDebug"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical"
+        android:background="#F9FAFB"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DEBUG CONSOLE"
+            android:textColor="#374151"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="#E5E7EB" />
+
+        <TextView
+            android:id="@+id/tvDebugPairStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pair Status: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDebugDeviceId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Device ID: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDebugApiUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="API URL: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDebugLastSync"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Last Sync Time: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDebugQueueCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Pending Queue Count: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDebugLastResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Last Upload Result: -"
+            android:textColor="#4B5563"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnSyncNow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#10B981"
+            android:text="Sync Now"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+    </LinearLayout>
+
 </LinearLayout>
