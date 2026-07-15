@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.user import User
 from app.models.company import Company
+from app.models.device import Device
+from sqlalchemy import select
 from app.services.auth import auth_service
 from app.services.user import user_service
 from app.services.company import company_service
@@ -75,9 +77,6 @@ async def get_current_device(
     db: AsyncSession = Depends(get_db)
 ) -> Device:
     """Decodes JWT and retrieves device context. Validates it is active and paired."""
-    from sqlalchemy import select
-    from app.models.device import Device
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate device credentials",

@@ -49,6 +49,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
     }
 
 
+@router.get("/health", status_code=status.HTTP_200_OK)
 @router.get("/healthz", status_code=status.HTTP_200_OK)
 async def health_check():
     """Simple health check endpoint returning generic process stats."""
