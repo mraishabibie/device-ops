@@ -33,6 +33,21 @@ class Settings(BaseSettings):
                 f"postgresql+asyncpg://{self.POSTGRES_USER}:{encoded_password}"
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
+        else:
+            # If DATABASE_URL is provided, make sure the password portion is safely URL-encoded
+            try:
+                if "://" in self.DATABASE_URL:
+                    scheme, rest = self.DATABASE_URL.split("://", 1)
+                    if "@" in rest:
+                        userinfo_host, path_query = rest.split("/", 1) if "/" in rest else (rest, "")
+                        userinfo, host = userinfo_host.rsplit("@", 1)
+                        if ":" in userinfo:
+                            username, password = userinfo.split(":", 1)
+                            decoded_password = urllib.parse.unquote(password)
+                            encoded_password = urllib.parse.quote_plus(decoded_password)
+                            self.DATABASE_URL = f"{scheme}://{username}:{encoded_password}@{host}/{path_query}"
+            except Exception:
+                pass
         return self
 
     model_config = SettingsConfigDict(
