@@ -40,9 +40,7 @@ export function eraseCookie(name: string) {
   document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
 }
 
-const API_BASE_URL = typeof window !== "undefined"
-  ? ""
-  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;

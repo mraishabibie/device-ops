@@ -1,4 +1,5 @@
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -25,10 +26,24 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Parse CORS origins
+backend_cors_origins_str = os.getenv("BACKEND_CORS_ORIGINS")
+if backend_cors_origins_str:
+    cors_origins = [origin.strip() for origin in backend_cors_origins_str.split(",") if origin.strip()]
+    cors_origin_regex = None
+else:
+    cors_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    # Allow localhost on any port and sslip.io subdomains on any port
+    cors_origin_regex = r"https?://(localhost|127\.0\.0\.1|.*\.sslip\.io)(:\d+)?"
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Set to specific domains in production configuration
+    allow_origins=cors_origins,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
