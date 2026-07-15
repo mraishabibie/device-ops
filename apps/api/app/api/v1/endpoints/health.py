@@ -20,25 +20,31 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
     """Readiness probe. Checks external system dependencies (database & redis)."""
     db_ok = False
     redis_ok = False
+    db_error = None
     
     # Check Database connection
     try:
         await db.execute(text("SELECT 1"))
         db_ok = True
     except Exception as e:
+        db_error = str(e)
         logger.error(f"Database readiness check failed: {e}")
         
     # Check Redis connection
     redis_ok = await check_redis_health()
     
     if not db_ok or not redis_ok:
+        detail_resp = {
+            "status": "fail",
+            "database": "ok" if db_ok else "fail",
+            "redis": "ok" if redis_ok else "fail"
+        }
+        if db_error:
+            detail_resp["database_error"] = db_error
+            
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "status": "fail",
-                "database": "ok" if db_ok else "fail",
-                "redis": "ok" if redis_ok else "fail"
-            }
+            detail=detail_resp
         )
         
     return {
