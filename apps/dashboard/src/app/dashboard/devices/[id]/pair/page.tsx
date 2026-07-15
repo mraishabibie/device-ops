@@ -175,7 +175,7 @@ export default function DevicePairPage() {
                   src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(
                     JSON.stringify({
                       token: tokenData.token,
-                      server_url: process.env.NEXT_PUBLIC_API_URL || window.location.origin
+                      server_url: (process.env.NEXT_PUBLIC_API_URL || window.location.origin).replace(/^http:\/\//, "https://")
                     })
                   )}`}
                   alt="Pairing QR Code"

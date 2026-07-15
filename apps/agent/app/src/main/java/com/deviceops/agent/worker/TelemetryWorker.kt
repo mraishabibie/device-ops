@@ -218,10 +218,20 @@ class TelemetryWorker(
 
         val syncPayload = TelemetrySyncDto(gpsDtos, batteryDtos, networkDtos)
 
-        val serverUrl = sharedPrefs.getString("server_api_url", "http://10.0.2.2:8000/") ?: "http://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        if (serverUrl.startsWith("http://")) {
+            serverUrl = "https://" + serverUrl.substring(7)
+        }
+
+        val okHttpClient = if (BuildConfig.DEBUG) {
+            getUnsafeOkHttpClient()
+        } else {
+            okhttp3.OkHttpClient.Builder().build()
+        }
 
         val retrofit = Retrofit.Builder()
             .baseUrl(serverUrl)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -249,6 +259,28 @@ class TelemetryWorker(
             sharedPrefs.edit()
                 .putString("last_upload_result", "Failed: $errStr")
                 .apply()
+        }
+    }
+
+    private fun getUnsafeOkHttpClient(): okhttp3.OkHttpClient {
+        return try {
+            val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(
+                object : javax.net.ssl.X509TrustManager {
+                    override fun checkClientTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                    override fun checkServerTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                    override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+                }
+            )
+            val sslContext = javax.net.ssl.SSLContext.getInstance("SSL")
+            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+            val sslSocketFactory = sslContext.socketFactory
+            
+            okhttp3.OkHttpClient.Builder()
+                .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
+                .hostnameVerifier { _, _ -> true }
+                .build()
+        } catch (e: Exception) {
+            throw RuntimeException(e)
         }
     }
 }

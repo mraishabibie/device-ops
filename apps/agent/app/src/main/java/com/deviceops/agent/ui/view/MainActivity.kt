@@ -141,7 +141,10 @@ class MainActivity : AppCompatActivity() {
             // Attempt to parse JSON containing token and server_url
             val json = JSONObject(data)
             val token = json.getString("token")
-            val serverUrl = json.getString("server_url")
+            var serverUrl = json.getString("server_url")
+            if (serverUrl.startsWith("http://")) {
+                serverUrl = "https://" + serverUrl.substring(7)
+            }
             
             // Normalize server URL trailing slash
             val normalizedUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
@@ -209,7 +212,10 @@ class MainActivity : AppCompatActivity() {
     private fun updateUIState() {
         val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
         val token = sharedPrefs.getString("device_auth_token", null)
-        val serverUrl = sharedPrefs.getString("server_api_url", "http://10.0.2.2:8000/") ?: "http://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        if (serverUrl.startsWith("http://")) {
+            serverUrl = "https://" + serverUrl.substring(7)
+        }
         
         if (token != null) {
             val syncIntervalMsg = if (com.deviceops.agent.BuildConfig.DEBUG) "1 min" else "30 mins"
@@ -293,7 +299,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun pairDevice(tokenCode: String) {
         val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
-        val serverUrl = sharedPrefs.getString("server_api_url", "http://10.0.2.2:8000/") ?: "http://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        if (serverUrl.startsWith("http://")) {
+            serverUrl = "https://" + serverUrl.substring(7)
+        }
+
+        val okHttpClient = if (com.deviceops.agent.BuildConfig.DEBUG) {
+            getUnsafeOkHttpClient()
+        } else {
+            okhttp3.OkHttpClient.Builder().build()
+        }
 
         lifecycleScope.launch {
             try {
@@ -304,6 +319,7 @@ class MainActivity : AppCompatActivity() {
                 val response = withContext(Dispatchers.IO) {
                     val retrofit = Retrofit.Builder()
                         .baseUrl(serverUrl)
+                        .client(okHttpClient)
                         .addConverterFactory(GsonConverterFactory.create())
                         .build()
                     val api = retrofit.create(DeviceOpsApi::class.java)
@@ -359,5 +375,27 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         checkBatteryOptimizations()
         updateUIState()
+    }
+
+    private fun getUnsafeOkHttpClient(): okhttp3.OkHttpClient {
+        return try {
+            val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(
+                object : javax.net.ssl.X509TrustManager {
+                    override fun checkClientTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                    override fun checkServerTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                    override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+                }
+            )
+            val sslContext = javax.net.ssl.SSLContext.getInstance("SSL")
+            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+            val sslSocketFactory = sslContext.socketFactory
+            
+            okhttp3.OkHttpClient.Builder()
+                .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
+                .hostnameVerifier { _, _ -> true }
+                .build()
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
     }
 }
