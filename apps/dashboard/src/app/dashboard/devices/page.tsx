@@ -60,6 +60,7 @@ export default function DevicesOverviewPage() {
   const [wizardType, setWizardType] = useState("PHONE");
   const [wizardDept, setWizardDept] = useState("");
   const [wizardSerial, setWizardSerial] = useState("");
+  const [wizardError, setWizardError] = useState<string | null>(null); // error shown inside modal
   const [isRegistering, setIsRegistering] = useState(false);
 
   const isViewer = user?.role === "VIEWER";
@@ -94,11 +95,12 @@ export default function DevicesOverviewPage() {
   }, [page, search, statusFilter, typeFilter]);
 
   const handleRegisterDevice = async () => {
-    setErrorMsg(null);
-    setSuccessMsg(null);
+    if (isViewer) return;
+
+    setWizardError(null);
 
     if (!wizardName.trim() || !wizardSerial.trim()) {
-      setErrorMsg("Device Name and Serial Number are mandatory.");
+      setWizardError("Device Name and Serial Number are mandatory.");
       return;
     }
 
@@ -118,24 +120,23 @@ export default function DevicesOverviewPage() {
       });
 
       if (response.ok) {
-        setSuccessMsg("Device registered successfully and set to PENDING_SYNC status.");
+        // Close and reset wizard
         setIsWizardOpen(false);
-        // Reset inputs
         setWizardName("");
         setWizardSerial("");
         setWizardDept("");
         setWizardType("PHONE");
         setWizardStep(1);
-        // Reload list
-        setPage(1);
-        // useEffect watches [page] so if page was already 1, force re-fetch
+        setWizardError(null);
+        // Show page-level success and refresh list
+        setSuccessMsg("Device registered successfully and set to PENDING_SYNC status.");
         fetchDevices();
       } else {
         const errData = await response.json().catch(() => ({ detail: "Registration failed" }));
-        setErrorMsg(errData.detail || "Failed to register device.");
+        setWizardError(errData.detail || "Failed to register device.");
       }
     } catch (err) {
-      setErrorMsg("Failed to connect to backend server.");
+      setWizardError("Failed to connect to backend server.");
     } finally {
       setIsRegistering(false);
     }
@@ -211,7 +212,10 @@ export default function DevicesOverviewPage() {
 
         {!isViewer && (
           <Button
-            onClick={() => setIsWizardOpen(true)}
+            onClick={() => {
+              setWizardError(null);
+              setIsWizardOpen(true);
+            }}
             className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 text-sm"
           >
             <Plus className="h-4 w-4" />
@@ -454,6 +458,14 @@ export default function DevicesOverviewPage() {
                     <span className="text-zinc-900">{wizardDept || "None"}</span>
                   </div>
                 </div>
+
+                {/* Inline error shown inside the modal so user can see it without closing */}
+                {wizardError && (
+                  <div className="flex items-start gap-2 p-3 text-xs rounded-lg bg-red-50 border border-red-200 text-red-700">
+                    <span className="shrink-0 mt-0.5">⚠</span>
+                    <span>{wizardError}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between pt-3">
                   <button

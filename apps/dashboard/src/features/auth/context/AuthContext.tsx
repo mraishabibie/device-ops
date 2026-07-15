@@ -21,6 +21,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Parse a JWT access token payload into a minimal User object as fallback */
+function parseJwtFallbackUser(accessToken: string, emailFallback = ""): User | null {
+  try {
+    const parts = accessToken.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.sub) return null;
+    return {
+      id: payload.sub,
+      email: emailFallback,
+      fullName: "",
+      role: payload.role || "VIEWER", // Default to most restrictive role as safety fallback
+      companyId: payload.company_id || "",
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the current authenticated user profile from the API */
 async function fetchCurrentUser(): Promise<User | null> {
   try {
@@ -44,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // On initial mount, attempt token restoration from cookie
+  // On initial mount, attempt session restoration from the refresh-token cookie
   useEffect(() => {
     async function restoreSession() {
       const refreshToken = getCookie("deviceops_refresh_token");
@@ -63,22 +82,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           setAccessToken(data.access_token);
-          // Fetch real user profile from API
+
+          // Attempt to fetch real user profile; fall back to JWT payload so the
+          // dashboard always renders even if /users/me is temporarily unavailable.
           const currentUser = await fetchCurrentUser();
-          setUser(currentUser);
-          if (!currentUser) {
-            eraseCookie("deviceops_refresh_token");
-            setAccessToken("");
+          if (currentUser) {
+            setUser(currentUser);
+          } else {
+            const fallback = parseJwtFallbackUser(data.access_token);
+            setUser(fallback);
           }
         } else {
+          // Refresh token is invalid or expired — clear session
           eraseCookie("deviceops_refresh_token");
           setAccessToken("");
           setUser(null);
         }
       } catch (err) {
         console.error("Failed to restore session on boot:", err);
-        eraseCookie("deviceops_refresh_token");
-        setAccessToken("");
+        // Do NOT clear the cookie on network errors; let the user retry
         setUser(null);
       } finally {
         setLoading(false);
@@ -102,15 +124,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
 
-    // Store access token in-memory
+    // Persist tokens
     setAccessToken(data.access_token);
-
-    // Store refresh token as a cookie (7 day expiry)
     setCookie("deviceops_refresh_token", data.refresh_token, 7);
 
-    // Fetch real user profile from API
+    // Fetch the real user profile. Fall back to JWT payload if the call fails so
+    // that login still succeeds even when /users/me is temporarily unavailable.
     const currentUser = await fetchCurrentUser();
-    setUser(currentUser);
+    if (currentUser) {
+      setUser(currentUser);
+    } else {
+      const fallback = parseJwtFallbackUser(data.access_token, email);
+      setUser(fallback);
+    }
 
     router.push("/dashboard");
   };

@@ -88,11 +88,13 @@ export async function apiFetch(path: string, options: FetchOptions = {}): Promis
       }
     }
     
-    // Clear credentials and route to login if refresh fails
+    // Clear credentials and redirect to login — return a promise that never
+    // resolves so no component accidentally handles the 401 response after redirect.
     eraseCookie("deviceops_refresh_token");
     setAccessToken("");
     if (typeof window !== "undefined") {
       window.location.href = "/login";
+      return new Promise<Response>(() => {});
     }
   }
 
