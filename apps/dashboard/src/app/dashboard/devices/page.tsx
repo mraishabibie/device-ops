@@ -93,10 +93,7 @@ export default function DevicesOverviewPage() {
     fetchDevices();
   }, [page, search, statusFilter, typeFilter]);
 
-  const handleRegisterDevice = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isViewer) return;
-
+  const handleRegisterDevice = async () => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -131,6 +128,7 @@ export default function DevicesOverviewPage() {
         setWizardStep(1);
         // Reload list
         setPage(1);
+        // useEffect watches [page] so if page was already 1, force re-fetch
         fetchDevices();
       } else {
         const errData = await response.json().catch(() => ({ detail: "Registration failed" }));

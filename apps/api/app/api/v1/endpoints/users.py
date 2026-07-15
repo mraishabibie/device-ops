@@ -16,6 +16,15 @@ logger = logging.getLogger("deviceops.user_api")
 router = APIRouter()
 
 
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user),
+):
+    """Returns the authenticated user's own profile including role and company context"""
+    return current_user
+
+
+
 async def is_last_active_owner(db: AsyncSession, company_id: uuid.UUID, target_user_id: uuid.UUID) -> bool:
     """Helper to check if target user is the last ACTIVE OWNER in the company"""
     query = select(func.count(User.id)).where(

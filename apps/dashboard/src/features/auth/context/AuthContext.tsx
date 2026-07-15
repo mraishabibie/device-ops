@@ -21,12 +21,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Fetch the current authenticated user profile from the API */
+async function fetchCurrentUser(): Promise<User | null> {
+  try {
+    const res = await apiFetch("/api/v1/users/me");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      id: data.id,
+      email: data.email,
+      fullName: data.full_name,
+      role: data.role,
+      companyId: data.company_id,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // On initial mount, attempt token restoration
+  // On initial mount, attempt token restoration from cookie
   useEffect(() => {
     async function restoreSession() {
       const refreshToken = getCookie("deviceops_refresh_token");
@@ -38,32 +56,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await apiFetch("/api/v1/auth/refresh", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refresh_token: refreshToken }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          // Access token stored in memory
           setAccessToken(data.access_token);
-          
-          // Parse user payload from JWT token to populate local state
-          const tokenParts = data.access_token.split(".");
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(atob(tokenParts[1]));
-            // Setup a mock user payload containing the ID extracted from token subject
-            setUser({
-              id: payload.sub,
-              email: "admin@deviceops.net", // Fallback info, can query user details endpoint if added
-              fullName: "Administrator",
-              role: "ADMIN",
-              companyId: "mock-company-id",
-            });
+          // Fetch real user profile from API
+          const currentUser = await fetchCurrentUser();
+          setUser(currentUser);
+          if (!currentUser) {
+            eraseCookie("deviceops_refresh_token");
+            setAccessToken("");
           }
         } else {
-          // Token is invalid/expired
           eraseCookie("deviceops_refresh_token");
           setAccessToken("");
           setUser(null);
@@ -84,9 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await apiFetch("/api/v1/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
@@ -96,25 +101,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    
+
     // Store access token in-memory
     setAccessToken(data.access_token);
-    
-    // Store refresh token in a secure client cookie (7 days expiry)
+
+    // Store refresh token as a cookie (7 day expiry)
     setCookie("deviceops_refresh_token", data.refresh_token, 7);
 
-    // Decode user details from the JWT
-    const tokenParts = data.access_token.split(".");
-    if (tokenParts.length === 3) {
-      const payload = JSON.parse(atob(tokenParts[1]));
-      setUser({
-        id: payload.sub,
-        email: email,
-        fullName: "Administrator",
-        role: "ADMIN",
-        companyId: "mock-company-id",
-      });
-    }
+    // Fetch real user profile from API
+    const currentUser = await fetchCurrentUser();
+    setUser(currentUser);
 
     router.push("/dashboard");
   };
