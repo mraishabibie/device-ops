@@ -26,9 +26,13 @@ import com.deviceops.agent.R
 import com.deviceops.agent.data.remote.DeviceOpsApi
 import com.deviceops.agent.data.remote.PairRequest
 import com.deviceops.agent.worker.TelemetryWorker
+import com.google.zxing.integration.android.IntentIntegrator
+import com.google.zxing.integration.android.IntentResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -40,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etPairingToken: EditText
     private lateinit var btnPair: Button
     private lateinit var btnRequestIgnoreBattery: Button
+    private lateinit var tvOr: TextView
+    private lateinit var btnScanQr: Button
 
     private val fineLocationPermissionCode = 101
 
@@ -52,6 +58,8 @@ class MainActivity : AppCompatActivity() {
         etPairingToken = findViewById(R.id.etPairingToken)
         btnPair = findViewById(R.id.btnPair)
         btnRequestIgnoreBattery = findViewById(R.id.btnRequestIgnoreBattery)
+        tvOr = findViewById(R.id.tvOr)
+        btnScanQr = findViewById(R.id.btnScanQr)
 
         checkPermissions()
         checkBatteryOptimizations()
@@ -66,8 +74,60 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnScanQr.setOnClickListener {
+            startQRScanner()
+        }
+
         btnRequestIgnoreBattery.setOnClickListener {
             requestIgnoreBatteryOptimization()
+        }
+    }
+
+    private fun startQRScanner() {
+        val integrator = IntentIntegrator(this)
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+        integrator.setPrompt("Scan pairing QR Code from Dashboard")
+        integrator.setCameraId(0)
+        integrator.setBeepEnabled(false)
+        integrator.setBarcodeImageEnabled(false)
+        integrator.initiateScan()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result: IntentResult? = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            val scannedContent = result.contents
+            if (scannedContent != null) {
+                processScannedData(scannedContent)
+            } else {
+                Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    private fun processScannedData(data: String) {
+        try {
+            // Attempt to parse JSON containing token and server_url
+            val json = JSONObject(data)
+            val token = json.getString("token")
+            val serverUrl = json.getString("server_url")
+            
+            // Normalize server URL trailing slash
+            val normalizedUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+            
+            val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
+            sharedPrefs.edit()
+                .putString("server_api_url", normalizedUrl)
+                .apply()
+                
+            etPairingToken.setText(token)
+            pairDevice(token)
+        } catch (e: JSONException) {
+            // Fallback: treat as raw token code
+            etPairingToken.setText(data)
+            pairDevice(data)
         }
     }
 
@@ -124,10 +184,14 @@ class MainActivity : AppCompatActivity() {
             tvStatus.text = "Device Status: PAIRED & CONNECTED\nTelemetry Sync: Scheduled (30 mins)"
             etPairingToken.visibility = View.GONE
             btnPair.visibility = View.GONE
+            btnScanQr.visibility = View.GONE
+            tvOr.visibility = View.GONE
         } else {
             tvStatus.text = "Device Status: UNPAIRED\nEnter QR token code below to pair:"
             etPairingToken.visibility = View.VISIBLE
             btnPair.visibility = View.VISIBLE
+            btnScanQr.visibility = View.VISIBLE
+            tvOr.visibility = View.VISIBLE
         }
     }
 

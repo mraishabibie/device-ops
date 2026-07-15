@@ -170,7 +170,20 @@ export default function DevicePairPage() {
           {/* QR visual block wrapper */}
           <div className="mx-auto w-56 h-56 bg-zinc-50 border border-zinc-200 rounded-lg flex items-center justify-center p-4 relative">
             <div className="absolute inset-4 border-2 border-dashed border-blue-600/30 rounded flex items-center justify-center bg-white">
-              <QrCode className="h-32 w-32 text-zinc-800" />
+              {tokenData?.token ? (
+                <img
+                  src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(
+                    JSON.stringify({
+                      token: tokenData.token,
+                      server_url: process.env.NEXT_PUBLIC_API_URL || window.location.origin
+                    })
+                  )}`}
+                  alt="Pairing QR Code"
+                  className="h-44 w-44"
+                />
+              ) : (
+                <QrCode className="h-32 w-32 text-zinc-300 animate-pulse" />
+              )}
             </div>
           </div>
 

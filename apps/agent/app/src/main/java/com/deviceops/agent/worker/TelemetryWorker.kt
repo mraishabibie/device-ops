@@ -61,7 +61,7 @@ class TelemetryWorker(
 
             Result.success()
         } catch (e: Exception) {
-            Log.error("TelemetryWorker", "Telemetry collection job failed: ${e.message}", e)
+            Log.e("TelemetryWorker", "Telemetry collection job failed: ${e.message}", e)
             Result.retry()
         }
     }
@@ -136,7 +136,7 @@ class TelemetryWorker(
         val coarsePerm = ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION)
         
         if (finePerm != PackageManager.PERMISSION_GRANTED && coarsePerm != PackageManager.PERMISSION_GRANTED) {
-            Log.warn("TelemetryWorker", "Location permissions are not granted. Skipping location capture.")
+            Log.w("TelemetryWorker", "Location permissions are not granted. Skipping location capture.")
             return null
         }
 
@@ -168,10 +168,10 @@ class TelemetryWorker(
                 )
             }
         } catch (e: SecurityException) {
-            Log.warn("TelemetryWorker", "SecurityException occurred while accessing Location Manager: ${e.message}")
+            Log.w("TelemetryWorker", "SecurityException occurred while accessing Location Manager: ${e.message}")
             null
         } catch (e: Exception) {
-            Log.warn("TelemetryWorker", "Failed to retrieve location status: ${e.message}")
+            Log.w("TelemetryWorker", "Failed to retrieve location status: ${e.message}")
             null
         }
     }
@@ -211,7 +211,7 @@ class TelemetryWorker(
             dao.deleteBattery(batteryList)
             dao.deleteNetwork(networkList)
         } else {
-            Log.warn("TelemetryWorker", "Telemetry upload failed: ${response.code()} ${response.errorBody()?.string()}")
+            Log.w("TelemetryWorker", "Telemetry upload failed: ${response.code()} ${response.errorBody()?.string()}")
         }
     }
 }
