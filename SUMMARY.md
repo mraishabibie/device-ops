@@ -70,7 +70,7 @@ Aplikasi **DeviceOps** adalah sistem monitoring terpusat (*Centralized Android T
 ---
 
 ## 6. Kekurangan & Batasan Aplikasi (Limitations)
-* **Ketergantungan Koneksi Internet:** Meskipun data disimpan sementara di database lokal perangkat (*offline queue*), data telemetri tidak dapat diperbarui secara *real-time* ke dashboard jika perangkat berada di area *blind spot* (blank spot) sinyal internet seluler (seperti di laut lepas yang jauh dari BTS atau pegunungan dalam).
+* **Keterlambatan Pemantauan Real-time saat Offline:** Meskipun perekaman data tetap berjalan aman secara lokal di memori HP (*Room Database*) saat offline (tidak ada data yang hilang), admin di dashboard tidak dapat memantau pergerakan secara langsung (*real-time*) selama gawai berada di area *blind spot*. Data riwayat perjalanan baru akan terkirim secara rapel (sekaligus) setelah perangkat kembali mendapatkan sinyal internet.
 * **Konsumsi Baterai Tambahan:** Pengaktifan sensor GPS secara berkala dan transmisi data secara terus-menerus di latar belakang (*background service*) dapat meningkatkan konsumsi daya baterai perangkat jika interval sinkronisasi diatur terlalu rapat.
 * **Akurasi Lokasi di Ruang Tertutup:** GPS internal perangkat sangat bergantung pada pandangan langit yang jelas. Jika diletakkan di dalam kontainer besi rapat atau palka kapal logam, akurasi pelacakan lokasi akan berkurang karena terhalang material logam (*GPS Signal Shielding*).
 * **Ketergantungan pada Izin Pengguna:** Aplikasi sangat bergantung pada konfigurasi izin sistem Android (*Location Permission set to "Allow all the time"*). Jika operator perangkat di lapangan mematikan izin lokasi atau mematikan layanan GPS secara manual, pelacakan akan terhenti.
