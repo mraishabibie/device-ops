@@ -127,68 +127,80 @@ export default function DashboardOverviewPage() {
       {/* Page Header */}
       <div className="flex justify-between items-center max-w-7xl">
         <div>
-          <h2 className="text-xl font-bold text-zinc-950">Workspace Status</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Timestamps formatted in company timezone: <span className="font-semibold text-zinc-700">{companyTimezone}</span>
+          <h2 className="text-xl font-bold text-slate-900">Workspace Status</h2>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            Timestamps formatted in company timezone: <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/50">{companyTimezone}</span>
           </p>
         </div>
         <button
           onClick={loadDashboardData}
-          className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 border border-zinc-200 bg-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 bg-white px-3.5 py-2 rounded-xl transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-sm cursor-pointer"
         >
-          <RefreshCw className="h-3.5 w-3.5" /> Reload Stats
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-slate-400" : "text-slate-500"}`} /> Reload Stats
         </button>
       </div>
 
       {errorMsg && (
-        <div className="p-4 text-sm rounded-lg bg-red-50 border border-red-200 text-red-700 max-w-4xl">
+        <div className="p-4 text-sm rounded-xl bg-red-50 border border-red-200 text-red-700 max-w-4xl shadow-sm">
           {errorMsg}
         </div>
       )}
 
       {/* STATISTICS CARDS (Refinement: Calculated only from active devices) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl">
         {/* Total Devices */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-2">
-          <div className="flex justify-between text-zinc-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Active</span>
-            <Smartphone className="h-5 w-5 text-zinc-500" />
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 space-y-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-blue-500 to-indigo-500" />
+          <div className="flex justify-between items-center text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Active</span>
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <Smartphone className="h-4 w-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-zinc-900">
-            {loading ? <Loader2 className="h-5 w-5 animate-spin text-zinc-400" /> : stats?.total_devices ?? 0}
+          <div className="text-3xl font-extrabold text-slate-900 font-sans tracking-tight">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin text-slate-400" /> : stats?.total_devices ?? 0}
           </div>
         </div>
 
         {/* Online Devices */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-2">
-          <div className="flex justify-between text-green-500">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Online</span>
-            <CheckCircle className="h-5 w-5" />
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 space-y-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-teal-500" />
+          <div className="flex justify-between items-center text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Online</span>
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-100 transition-colors">
+              <CheckCircle className="h-4 w-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-zinc-900">
-            {loading ? <Loader2 className="h-5 w-5 animate-spin text-zinc-400" /> : stats?.online_devices ?? 0}
+          <div className="text-3xl font-extrabold text-slate-900 font-sans tracking-tight">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin text-slate-400" /> : stats?.online_devices ?? 0}
           </div>
         </div>
 
         {/* Offline Devices */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-2">
-          <div className="flex justify-between text-zinc-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Offline</span>
-            <XCircle className="h-5 w-5 text-zinc-400" />
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 space-y-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-slate-400 to-slate-500" />
+          <div className="flex justify-between items-center text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Offline</span>
+            <div className="p-2 bg-slate-50 text-slate-600 rounded-xl group-hover:bg-slate-100 transition-colors">
+              <XCircle className="h-4 w-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-zinc-900">
-            {loading ? <Loader2 className="h-5 w-5 animate-spin text-zinc-400" /> : stats?.offline_devices ?? 0}
+          <div className="text-3xl font-extrabold text-slate-900 font-sans tracking-tight">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin text-slate-400" /> : stats?.offline_devices ?? 0}
           </div>
         </div>
 
         {/* Pending Sync Devices */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-2">
-          <div className="flex justify-between text-blue-500">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Pending Sync</span>
-            <Clock className="h-5 w-5" />
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 space-y-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-purple-500" />
+          <div className="flex justify-between items-center text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending Sync</span>
+            <div className="p-2 bg-violet-50 text-violet-600 rounded-xl group-hover:bg-violet-100 transition-colors">
+              <Clock className="h-4 w-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-zinc-900">
-            {loading ? <Loader2 className="h-5 w-5 animate-spin text-zinc-400" /> : stats?.pending_sync_devices ?? 0}
+          <div className="text-3xl font-extrabold text-slate-900 font-sans tracking-tight">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin text-slate-400" /> : stats?.pending_sync_devices ?? 0}
           </div>
         </div>
       </div>
@@ -197,22 +209,22 @@ export default function DashboardOverviewPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl">
         
         {/* Live Device List Table */}
-        <div className="xl:col-span-2 bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h3 className="font-bold text-zinc-950 text-sm">Operational Terminal List</h3>
+        <div className="xl:col-span-2 bg-white border border-slate-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h3 className="font-extrabold text-slate-900 text-sm">Operational Terminal List</h3>
             
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2.5 w-full sm:w-auto">
               {/* Search */}
               <div className="relative w-full sm:max-w-xs">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-400">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                   <Search className="h-3.5 w-3.5" />
                 </span>
                 <input
                   type="text"
-                  placeholder="Filter name..."
+                  placeholder="Filter name or serial..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-white border border-zinc-200 rounded outline-none focus:border-blue-600 transition text-zinc-900"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition text-slate-900"
                 />
               </div>
 
@@ -220,7 +232,7 @@ export default function DashboardOverviewPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-white border border-zinc-200 rounded outline-none focus:border-blue-600 text-zinc-900"
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition text-slate-900 font-medium cursor-pointer"
               >
                 <option value="">All Status</option>
                 <option value="ONLINE">ONLINE</option>
@@ -233,45 +245,52 @@ export default function DashboardOverviewPage() {
           <div className="overflow-x-auto flex-grow">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-200">
-                  <th className="p-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Device Name</th>
-                  <th className="p-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Serial</th>
-                  <th className="p-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Last handshake</th>
-                  <th className="p-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Device Name</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Serial</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last handshake</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200">
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-zinc-500 text-xs">
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-600 mx-auto mb-2" />
+                    <td colSpan={4} className="p-12 text-center text-slate-400 text-xs">
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-600 mx-auto mb-2" />
                       Loading live terminal feeds...
                     </td>
                   </tr>
                 ) : filteredDevices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-zinc-500 text-xs">
+                    <td colSpan={4} className="p-12 text-center text-slate-400 text-xs">
                       No operational devices match criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredDevices.map((item) => (
-                    <tr key={item.id} className="hover:bg-zinc-50/50 transition-colors">
-                      <td className="p-3 text-xs font-semibold text-zinc-900">
+                    <tr key={item.id} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="p-4 text-xs font-bold text-slate-900">
                         <Link href={`/dashboard/devices/${item.id}`} className="hover:text-blue-600 transition-colors">
                           {item.device_name}
                         </Link>
                       </td>
-                      <td className="p-3 text-xs text-zinc-500 font-mono">{item.serial_number}</td>
-                      <td className="p-3 text-xs text-zinc-600">{formatTimestamp(item.last_sync_at)}</td>
-                      <td className="p-3 text-xs">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                      <td className="p-4 text-xs text-slate-500 font-mono">{item.serial_number}</td>
+                      <td className="p-4 text-xs text-slate-500">{formatTimestamp(item.last_sync_at)}</td>
+                      <td className="p-4 text-xs">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold border ${
                           item.status === "ONLINE"
-                            ? "bg-green-50 text-green-700"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                             : item.status === "OFFLINE"
-                            ? "bg-zinc-100 text-zinc-700"
-                            : "bg-blue-50 text-blue-700"
+                            ? "bg-slate-50 text-slate-600 border-slate-200"
+                            : "bg-blue-50 text-blue-700 border-blue-100"
                         }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            item.status === "ONLINE"
+                              ? "bg-emerald-500"
+                              : item.status === "OFFLINE"
+                              ? "bg-slate-400"
+                              : "bg-blue-500"
+                          }`} />
                           {item.status}
                         </span>
                       </td>
@@ -284,40 +303,45 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Recent Activity List logs */}
-        <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
-            <h3 className="font-bold text-zinc-950 text-sm flex items-center gap-1.5">
-              <Activity className="h-4 w-4 text-blue-600" /> Recent Telemetry Activity
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-slate-100 bg-white flex items-center justify-between">
+            <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+              <Activity className="h-4 w-4 text-blue-600 animate-pulse" /> Recent Telemetry Activity
             </h3>
           </div>
           
-          <div className="p-4 flex-grow overflow-y-auto space-y-4 max-h-[360px]">
+          <div className="p-5 flex-grow overflow-y-auto space-y-4 max-h-[380px] scrollbar-thin">
             {loading ? (
-              <div className="text-center text-zinc-500 text-xs py-12">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600 mx-auto mb-2" />
+              <div className="text-center text-slate-400 text-xs py-12">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600 mx-auto mb-2" />
                 Reading activity timeline...
               </div>
             ) : recentActivities.length === 0 ? (
-              <div className="text-center text-zinc-400 text-xs py-12">
+              <div className="text-center text-slate-400 text-xs py-12">
                 No telemetry activity logs reported yet.
               </div>
             ) : (
-              recentActivities.map((act) => (
-                <div key={act.id} className="text-xs space-y-1 relative border-l-2 border-zinc-100 pl-4 ml-2 pb-2">
-                  <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-zinc-300" />
-                  <div className="flex justify-between items-center text-zinc-400 text-[10px]">
-                    <span className="font-bold text-zinc-700">{act.device_name}</span>
-                    <span>{formatTimestamp(act.timestamp)}</span>
+              recentActivities.map((act) => {
+                const isBattery = act.action.toLowerCase().includes("battery");
+                const isNetwork = act.action.toLowerCase().includes("network");
+                const dotColor = isBattery ? "bg-emerald-500 ring-emerald-100" : isNetwork ? "bg-blue-500 ring-blue-100" : "bg-purple-500 ring-purple-100";
+                
+                return (
+                  <div key={act.id} className="text-xs space-y-1 relative border-l border-slate-100 pl-4.5 ml-2.5 pb-3">
+                    <div className={`absolute -left-[4.5px] top-1.5 h-2 w-2 rounded-full ${dotColor} ring-4`} />
+                    <div className="flex justify-between items-center text-slate-400 text-[9px]">
+                      <span className="font-bold text-slate-800">{act.device_name}</span>
+                      <span className="font-medium text-slate-400">{formatTimestamp(act.timestamp)}</span>
+                    </div>
+                    <p className="text-slate-600 leading-normal font-medium text-[11px]">{act.action}</p>
                   </div>
-                  <p className="text-zinc-600 leading-normal">{act.action}</p>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
       </div>
-
     </div>
   );
 }

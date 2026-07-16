@@ -42,20 +42,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-50 font-sans text-zinc-950">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
       
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-zinc-200 bg-white flex flex-col shrink-0">
+      <aside className="w-64 bg-slate-950 border-r border-slate-900 flex flex-col shrink-0">
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-6 border-b border-zinc-200 gap-2">
-          <div className="h-8 w-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="h-16 flex items-center px-6 border-b border-slate-900 gap-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)]">
             DO
           </div>
-          <span className="font-bold text-lg tracking-tight text-zinc-900">DeviceOps</span>
+          <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            DeviceOps
+          </span>
         </div>
 
         {/* Sidebar Nav Links */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
             const Icon = item.icon;
@@ -63,13 +65,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             return (
               <Link key={item.name} href={item.href} className="block">
                 <span
-                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                      ? "bg-blue-600/10 text-blue-400 border-l-2 border-blue-500 font-semibold"
+                      : "text-slate-400 hover:bg-slate-900/60 hover:text-white"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-blue-400" : "text-slate-400"}`} />
                   {item.name}
                 </span>
               </Link>
@@ -78,19 +80,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* User Workspace Info & Logout */}
-        <div className="p-4 border-t border-zinc-200 bg-zinc-50/50">
+        <div className="p-4 border-t border-slate-900 bg-slate-950/40">
           <div className="flex flex-col gap-2">
-            <div className="px-3">
-              <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Active User</p>
-              <p className="text-sm font-semibold text-zinc-800 truncate" title={user.email}>
+            <div className="px-3.5 py-3 bg-slate-900/50 rounded-xl border border-slate-900/60">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active User</p>
+              <p className="text-sm font-semibold text-slate-200 truncate mt-0.5" title={user.email}>
                 {user.email}
               </p>
-              <p className="text-[10px] text-zinc-400 capitalize">{user.role.toLowerCase()}</p>
+              <p className="text-[10px] text-blue-400 font-medium capitalize mt-0.5">{user.role.toLowerCase()}</p>
             </div>
             
             <button
               onClick={logout}
-              className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer text-left"
+              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-red-400 rounded-lg hover:bg-red-950/20 hover:text-red-300 transition-colors cursor-pointer text-left"
             >
               <LogOut className="h-4 w-4" />
               Sign Out
@@ -100,14 +102,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Workspace Pane */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
         {/* Top Header */}
-        <header className="h-16 border-b border-zinc-200 bg-white flex items-center justify-between px-8 shrink-0">
-          <h1 className="text-lg font-semibold text-zinc-900">
+        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <h1 className="text-lg font-bold text-slate-900">
             {navItems.find((item) => item.href === pathname)?.name || "Workspace"}
           </h1>
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1 text-xs font-semibold text-zinc-500 bg-zinc-100 border border-zinc-200 rounded-full">
+            <div className="px-3 py-1 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 rounded-full uppercase tracking-wider">
               Enterprise Tenant Isolated
             </div>
           </div>
