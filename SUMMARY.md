@@ -5,7 +5,7 @@ Aplikasi **DeviceOps** adalah sistem monitoring terpusat (*Centralized Android T
 ---
 
 ## 1. Problem (Masalah yang Dihadapi)
-* **Ketiadaan Visibilitas:** Perusahaan kesulitan memantau kondisi fisik perangkat Android (tablet kiosk, mesin kasir POS portabel, atau ponsel kurir) yang tersebar di berbagai cabang/lapangan.
+* **Ketiadaan Visibilitas:** Kesulitan memantau kondisi fisik perangkat Android (alat pelacak di kapal, truk logistik, atau gawai tim lapangan) yang sedang beroperasi di luar jangkauan.
 * **Perangkat Mati Tanpa Diketahui:** Sering kali perangkat kehabisan baterai atau kehilangan sinyal internet di lapangan tanpa disadari oleh tim pusat, mengganggu operasional bisnis.
 * **Kesulitan Pelacakan:** Tidak adanya pencatatan riwayat lokasi yang akurat untuk melacak keberadaan aset fisik perusahaan.
 * **Tantangan Teknis Sebelumnya:** Pembacaan data GPS sering bernilai `0.0` karena masalah izin background Android, persentase baterai tersangkut (*stale cache*), dan ketidaksesuaian zona waktu data (UTC vs WIB).
@@ -62,7 +62,7 @@ Aplikasi **DeviceOps** adalah sistem monitoring terpusat (*Centralized Android T
 ---
 
 ## 5. Bisa Digunakan untuk Apa Saja (Use Cases)
-* **Manajemen Kasir POS (Point of Sale):** Memantau semua tablet kasir portabel di berbagai outlet restoran/toko agar tidak kehabisan baterai saat jam sibuk.
-* **Pelacakan Armada Kurir/Sales:** Melacak pergerakan kurir pengirim barang atau sales lapangan secara real-time via koordinat GPS ponsel kerja mereka.
-* **Kiosk & Informasi Mandiri:** Memantau status konektivitas tablet kiosk mandiri di mal/bandara agar segera diperbaiki jika terjadi kendala jaringan (*offline*).
-* **Inventarisasi Perangkat Perusahaan:** Memastikan seluruh aset gawai pintar milik perusahaan selalu dalam keadaan aktif, sehat, dan terdata di bawah satu tenant perusahaan yang terisolasi.
+* **Manajemen & Monitoring Armada (Fleet Management):** Melacak posisi GPS dan status operasional armada transportasi seperti truk logistik, mobil pengiriman, atau kapal laut yang menggunakan perangkat Android sebagai GPS tracker.
+* **Keselamatan Wisatawan & Pendaki:** Memantau koordinat lokasi dan sisa baterai gawai para wisatawan atau pendaki di area wisata alam/pegunungan agar tim penyelamat bisa bertindak cepat jika gawai mereka terputus/habis baterai.
+* **Monitoring Nelayan Tradisional:** Melacak posisi kapal nelayan saat melaut untuk memantau keselamatan mereka dari potensi cuaca buruk di laut lepas.
+* **Inventarisasi & Keamanan Aset Bergerak:** Memastikan seluruh aset perangkat pintar pelacak milik perusahaan selalu dalam keadaan aktif, sehat, dan terdata di bawah satu tenant perusahaan yang aman.
