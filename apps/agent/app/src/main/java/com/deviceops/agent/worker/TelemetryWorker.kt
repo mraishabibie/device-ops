@@ -20,6 +20,8 @@ import com.deviceops.agent.data.local.*
 import com.deviceops.agent.data.remote.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
@@ -93,20 +95,23 @@ class TelemetryWorker(
     }
 
     private fun getBatteryLog(timestamp: String): BatteryLogEntity {
-        var level = 50
-        var isCharging = false
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val batteryManager = applicationContext.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        }
-
         val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { filter ->
             applicationContext.registerReceiver(null, filter)
         }
+
+        val level = batteryStatus?.let { intent ->
+            val levelVal = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scaleVal = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            if (levelVal != -1 && scaleVal != -1) {
+                ((levelVal.toFloat() / scaleVal.toFloat()) * 100).toInt()
+            } else {
+                50
+            }
+        } ?: 50
+
         val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-        isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || 
-                     status == BatteryManager.BATTERY_STATUS_FULL
+        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || 
+                         status == BatteryManager.BATTERY_STATUS_FULL
 
         return BatteryLogEntity(
             id = UUID.randomUUID().toString(),
@@ -156,7 +161,88 @@ class TelemetryWorker(
         )
     }
 
-    private fun getGPSLog(timestamp: String): GPSLogEntity? {
+    private suspend fun getBestLocation(): Location? = withContext(Dispatchers.Main) {
+        val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        
+        // 1. Try to get best last known location from all enabled providers
+        val providers = locationManager.getProviders(true)
+        var bestLocation: Location? = null
+        for (provider in providers) {
+            val loc = try {
+                locationManager.getLastKnownLocation(provider)
+            } catch (e: SecurityException) {
+                null
+            }
+            if (loc != null) {
+                if (bestLocation == null || loc.time > bestLocation.time) {
+                    bestLocation = loc
+                }
+            }
+        }
+        
+        // If we found a recent location (less than 5 minutes old), return it
+        if (bestLocation != null && (System.currentTimeMillis() - bestLocation.time) < 300000) {
+            return@withContext bestLocation
+        }
+        
+        // 2. Otherwise, request a single fresh location update
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
+            else -> null
+        } ?: return@withContext bestLocation
+        
+        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            val listener = object : android.location.LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    try {
+                        locationManager.removeUpdates(this)
+                    } catch (e: Exception) {}
+                    if (continuation.isActive) {
+                        continuation.resume(location)
+                    }
+                }
+                override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                override fun onProviderEnabled(provider: String) {}
+                override fun onProviderDisabled(provider: String) {}
+            }
+            
+            try {
+                locationManager.requestLocationUpdates(
+                    provider,
+                    0L,
+                    0f,
+                    listener,
+                    android.os.Looper.getMainLooper()
+                )
+            } catch (e: Exception) {
+                if (continuation.isActive) {
+                    continuation.resume(bestLocation)
+                }
+                return@suspendCancellableCoroutine
+            }
+            
+            // Timeout after 5 seconds to not block work manager indefinitely
+            val job = kotlinx.coroutines.GlobalScope.launch {
+                kotlinx.coroutines.delay(5000)
+                if (continuation.isActive) {
+                    try {
+                        locationManager.removeUpdates(listener)
+                    } catch (e: Exception) {}
+                    continuation.resume(bestLocation)
+                }
+            }
+            
+            continuation.invokeOnCancellation {
+                try {
+                    locationManager.removeUpdates(listener)
+                } catch (e: Exception) {}
+                job.cancel()
+            }
+        }
+    }
+
+    private suspend fun getGPSLog(timestamp: String): GPSLogEntity? {
         // Refinement 3: Handle missing GPS permission gracefully (do not crash)
         val finePerm = ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
         val coarsePerm = ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -167,14 +253,7 @@ class TelemetryWorker(
         }
 
         return try {
-            val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val provider = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                LocationManager.GPS_PROVIDER
-            } else {
-                LocationManager.NETWORK_PROVIDER
-            }
-
-            val lastLocation: Location? = locationManager.getLastKnownLocation(provider)
+            val lastLocation = getBestLocation()
             if (lastLocation != null) {
                 GPSLogEntity(
                     id = UUID.randomUUID().toString(),

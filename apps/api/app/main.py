@@ -100,7 +100,21 @@ async def bootstrap_database():
                 logger.info("Default Company: Default Workspace (slug: default)")
                 logger.info("Default Owner: admin@deviceops.co / Password123!")
             else:
-                logger.info("Database already contains data. Skipping bootstrap.")
+                logger.info("Database already contains data. Checking default timezone updates...")
+                # Automatic timezone migration: update 'UTC' default to 'Asia/Jakarta'
+                result = await db.execute(select(Company))
+                companies_list = result.scalars().all()
+                updated = False
+                for comp in companies_list:
+                    if comp.timezone == "UTC":
+                        comp.timezone = "Asia/Jakarta"
+                        db.add(comp)
+                        updated = True
+                if updated:
+                    await db.commit()
+                    logger.info("Updated existing UTC companies timezone to Asia/Jakarta.")
+                else:
+                    logger.info("No timezone updates required.")
         except Exception as e:
             await db.rollback()
             logger.warning(

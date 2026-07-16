@@ -10,7 +10,7 @@ class CompanyBase(BaseModel):
     website: str | None = Field(None, max_length=150)
     support_phone: str | None = Field(None, max_length=50)
     logo_url: str | None = Field(None, max_length=255)
-    timezone: str = "UTC"
+    timezone: str = "Asia/Jakarta"
     date_format: str = "YYYY-MM-DD"
 
     @field_validator("website")

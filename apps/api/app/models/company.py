@@ -22,7 +22,7 @@ class Company(Base, TimestampMixin, SoftDeleteMixin):
     website: Mapped[str | None] = mapped_column(String(150), nullable=True)
     support_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    timezone: Mapped[str] = mapped_column(String(100), default="UTC", nullable=False)
+    timezone: Mapped[str] = mapped_column(String(100), default="Asia/Jakarta", nullable=False)
     date_format: Mapped[str] = mapped_column(String(30), default="YYYY-MM-DD", nullable=False)
 
     # Relationships
