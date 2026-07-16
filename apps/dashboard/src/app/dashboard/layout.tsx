@@ -45,13 +45,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
       
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-950 border-r border-slate-900 flex flex-col shrink-0">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-900 gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+        <div className="h-16 flex items-center px-6 border-b border-slate-200 gap-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shadow-[0_4px_12px_rgba(37,99,235,0.2)]">
             DO
           </div>
-          <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+          <span className="font-extrabold text-lg tracking-tight text-slate-900">
             DeviceOps
           </span>
         </div>
@@ -65,13 +65,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             return (
               <Link key={item.name} href={item.href} className="block">
                 <span
-                  className={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "bg-blue-600/10 text-blue-400 border-l-2 border-blue-500 font-semibold"
-                      : "text-slate-400 hover:bg-slate-900/60 hover:text-white"
+                      ? "bg-blue-50 text-blue-600 border-l-2 border-blue-600"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${isActive ? "text-blue-400" : "text-slate-400"}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
                   {item.name}
                 </span>
               </Link>
@@ -80,21 +80,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* User Workspace Info & Logout */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950/40">
+        <div className="p-4 border-t border-slate-200 bg-slate-50/50">
           <div className="flex flex-col gap-2">
-            <div className="px-3.5 py-3 bg-slate-900/50 rounded-xl border border-slate-900/60">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active User</p>
-              <p className="text-sm font-semibold text-slate-200 truncate mt-0.5" title={user.email}>
+            <div className="px-3.5 py-3 bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active User</p>
+              <p className="text-sm font-semibold text-slate-800 truncate mt-0.5" title={user.email}>
                 {user.email}
               </p>
-              <p className="text-[10px] text-blue-400 font-medium capitalize mt-0.5">{user.role.toLowerCase()}</p>
+              <p className="text-[10px] text-blue-600 font-bold capitalize mt-0.5">{user.role.toLowerCase()}</p>
             </div>
             
             <button
               onClick={logout}
-              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-red-400 rounded-lg hover:bg-red-950/20 hover:text-red-300 transition-colors cursor-pointer text-left"
+              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-semibold text-red-600 rounded-xl hover:bg-red-50 transition-colors cursor-pointer text-left"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-red-500" />
               Sign Out
             </button>
           </div>
