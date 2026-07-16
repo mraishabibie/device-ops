@@ -54,6 +54,47 @@ async def login(
     )
 
 
+from fastapi.security import OAuth2PasswordRequestForm
+
+@router.post("/swagger-login", response_model=TokenResponse)
+async def swagger_login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    """OAuth2 password flow login for Swagger UI"""
+    user = await user_service.get_user_by_email(db, form_data.username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+        
+    is_valid = auth_service.verify_password(user.password_hash, form_data.password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+        
+    if user.status != "ACTIVE" or user.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is inactive or disabled"
+        )
+        
+    token_claims = {"role": user.role, "company_id": str(user.company_id)}
+    access_token = auth_service.create_access_token(subject=user.id, extra_claims=token_claims)
+    refresh_token = auth_service.create_refresh_token(subject=user.id, extra_claims=token_claims)
+    
+    user.last_login_at = datetime.now(timezone.utc)
+    db.add(user)
+    
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token
+    )
+
+
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     refresh_data: RefreshRequest,
