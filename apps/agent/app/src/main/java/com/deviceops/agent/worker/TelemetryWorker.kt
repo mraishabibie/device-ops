@@ -218,7 +218,7 @@ class TelemetryWorker(
 
         val syncPayload = TelemetrySyncDto(gpsDtos, batteryDtos, networkDtos)
 
-        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://api.splineproject.com/") ?: "https://api.splineproject.com/"
         if (serverUrl.startsWith("http://")) {
             serverUrl = "https://" + serverUrl.substring(7)
         }

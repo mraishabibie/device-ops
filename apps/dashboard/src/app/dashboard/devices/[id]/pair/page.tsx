@@ -29,6 +29,21 @@ interface PairingTokenData {
   expires_at: string;
 }
 
+const getApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost:8000")) {
+    const url = process.env.NEXT_PUBLIC_API_URL;
+    return url.endsWith("/") ? url : `${url}/`;
+  }
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname.includes("splineproject.com")) {
+      return "https://api.splineproject.com/";
+    }
+  }
+  const defaultUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.splineproject.com/";
+  return defaultUrl.endsWith("/") ? defaultUrl : `${defaultUrl}/`;
+};
+
 export default function DevicePairPage() {
   const params = useParams();
   const router = useRouter();
@@ -172,10 +187,10 @@ export default function DevicePairPage() {
             <div className="absolute inset-4 border-2 border-dashed border-blue-600/30 rounded flex items-center justify-center bg-white">
               {tokenData?.token ? (
                 <img
-                  src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
                     JSON.stringify({
                       token: tokenData.token,
-                      server_url: (process.env.NEXT_PUBLIC_API_URL || window.location.origin).replace(/^http:\/\//, "https://")
+                      server_url: getApiUrl()
                     })
                   )}`}
                   alt="Pairing QR Code"

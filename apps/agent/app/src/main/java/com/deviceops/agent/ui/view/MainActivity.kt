@@ -212,7 +212,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateUIState() {
         val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
         val token = sharedPrefs.getString("device_auth_token", null)
-        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://api.splineproject.com/") ?: "https://api.splineproject.com/"
         if (serverUrl.startsWith("http://")) {
             serverUrl = "https://" + serverUrl.substring(7)
         }
@@ -299,7 +299,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun pairDevice(tokenCode: String) {
         val sharedPrefs = getSharedPreferences("deviceops_agent_prefs", Context.MODE_PRIVATE)
-        var serverUrl = sharedPrefs.getString("server_api_url", "https://10.0.2.2:8000/") ?: "https://10.0.2.2:8000/"
+        var serverUrl = sharedPrefs.getString("server_api_url", "https://api.splineproject.com/") ?: "https://api.splineproject.com/"
         if (serverUrl.startsWith("http://")) {
             serverUrl = "https://" + serverUrl.substring(7)
         }
